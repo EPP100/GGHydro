@@ -1,0 +1,11 @@
+{
+  "project_name": "PIT5",
+  "unit_number": "U1",
+  "microphone": {
+    "device": "cDAQ1Mod1",
+    "channel": "cDAQ1Mod1/ai0",
+    "sensitivity_mV_per_Pa": 50.0,
+    "microphone_id": "VHM-COM123"
+  },
+  "recordings": []
+}
