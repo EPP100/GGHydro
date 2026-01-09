@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Module>
+  <CVS active="FALSE" FFTwindow="0" FFTclearoffset="FALSE" path="" filesize="0" harmordfact="5" nrblock="1" nthday="7" rms="FALSE" StoreSpeeds="TRUE">
+    <Frequencies>
+      <Frequ Max="1000" Min="0" />
+      <Frequ Max="2000" Min="1000" />
+      <Frequ Max="0" Min="0" />
+      <Frequ Max="0" Min="0" />
+      <Frequ Max="0" Min="0" />
+    </Frequencies>
+    <PPChNr classes="2" neglect="0.5" />
+    <Channels />
+  </CVS>
+  <Trigger select="0" revolunit="0" markers="0" active="FALSE">
+    <ThreshValues resettime="0" minrps="0" minrps2="0" />
+    <Channels />
+  </Trigger>
+  <TrendSettings datamode="all" windowtype="0" FFTclearoffset="TRUE" harmordfact="5" justintegrch="FALSE" revolaverages="1" trendactive="TRUE" blocks="50" triggact="FALSE" subblocklenght="1">
+    <ppch classes="20" neglect="1.5" />
+    <Clipboard mode="Clipboard" decsepar="." columnheader="FALSE" rowheader="FALSE" />
+    <Filter firfilterset="Off" mode="Bandpass" taps="50" lowerpb="5" upperpb="10" lowersb="5" uppersb="10" window="0" gainsb="-60" gainpb="-3" scale="TRUE" adjusttimeshift="TRUE" />
+    <Frequencies>
+      <Frequ Max="1000" Min="0" />
+      <Frequ Max="2000" Min="1000" />
+      <Frequ Max="0" Min="0" />
+      <Frequ Max="0" Min="0" />
+      <Frequ Max="0" Min="0" />
+    </Frequencies>
+  </TrendSettings>
+  <ChannelSetup defaultfactor="0" defaultoffset="0" defaultunit="">
+    <Channel physicalname="Sound" displayname="Sound" unit="Pascals" chnr="0" dbref="0" smaxch="" enablesmax="FALSE" integration="No Integration" enablerepar="FALSE" reparfactor="1" reparoffset="0" reparunit="Pascals" reparch="Sound" repared="FALSE" samplingrate="-1" saved="FALSE" PeakDelete="" PhysicalType="Invalid" Direction="Invalid" TriggerGroupNr="0" />
+  </ChannelSetup>
+  <Formula />
+  <CVSSettings autorefresh="FALSE" blockendtime="1903-12-31 19:00:00" blockstarttime="1903-12-31 19:00:00" activecvsch="" bychtrend="TRUE" usetotaltimerange="TRUE" export="C:\Users\gaouleg\Desktop\GGHydro\Projects\PIT5\Table Export.txt" masterid="" mindt="0" prevcampid="" relativeid="" timezoneoffset="0" totalendtime="1903-12-31 19:00:00" totalstarttime="1903-12-31 19:00:00">
+    <Parameter freqmax1="0" freqmin1="0" freqmax2="0" freqmin2="0" country="" gridfreq="0" harmordfact="0" location="" machine="" nsamples="0" normairgap="0" nrblock="0" numberofpoles="0" rms="FALSE" samplerate="0" sppclasses="0" sppneglect="0" sychspeed="0" timezonedst="0" timezonid="" timezoneutc="0" unit="">
+      <Frequencies />
+    </Parameter>
+  </CVSSettings>
+  <Clipboard mode="Clipboard" decsepar="." columnheader="FALSE" rowheader="FALSE" />
+  <DataSettings tEndAll="2026/01/09 - 22:21:20.523522" tEndBlock="2026/01/09 - 22:21:20.523542" t0All="2026/01/09 - 22:21:10.530710" t0Block="2026/01/09 - 22:21:10.530691" DST="0" />
+  <ViewMainSett ActiveChannel="Sound" TimeZoneID="W. Europe Standard Time" AutoRefresh="FALSE" TriggerGroupNr="0">
+    <ActiveFiles>
+      <File Path="C:\Users\gaouleg\Desktop\GGHydro\Projects\PIT5\recordings\U2\2026-01-09 - PIT5 - U2 - Idle - G5.tdms" />
+    </ActiveFiles>
+    <FFTSett Window="0" Integration="No Integration" RMS="FALSE" ClearOffset="FALSE" yAutoScale="FALSE" />
+    <FrequZoom Active="FALSE" Min="0" Max="0" />
+    <FilterSett Type="Off" Mode="Bandpass" LowerPB="5" UpperPB="10" />
+    <PeakSett Calculate="FALSE" Show="FALSE" Treshold="0" MaxNumber="0" />
+    <PanelRefreshing ActiveByBlock="FALSE" AllByBlock="FALSE" />
+  </ViewMainSett>
+  <FileSavingSett FileExtension=".tdms" Range="all" DecSeparator="." FileName="" TimeAxis="FALSE" Repar="FALSE" ExportFolder="" />
+  <Plugins />
+  <Layout Path="C:\Users\gaouleg\Desktop\GGHydro\Projects\PIT5\Default Layout.layout" />
+  <PeakDelete>
+    <ChannelDefs />
+    <ParameterSets />
+    <ConfigSet DAQsUnitID="" DAQsUnitName="" ChannelName="" ChannelDefID="">
+      <FFTSet FilterSet="Off" FilterMode="Lowpass" LowerPB="0" UpperPB="0" DerIntType="No Integration" />
+    </ConfigSet>
+  </PeakDelete>
+</Module>

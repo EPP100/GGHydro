@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Configuration>
+  <MultiPanel>
+    <Panel Type="VISUAL" Identifier="Main Docking 1">
+      <Plugins />
+      <Attributs />
+    </Panel>
+    <Panel Type="VISUAL" Identifier="Main Docking 2">
+      <Plugins />
+      <Attributs />
+    </Panel>
+  </MultiPanel>
+  <Undocked>
+    <Plugins />
+  </Undocked>
+  <Attributs>
+  </Attributs>
+</Configuration>
