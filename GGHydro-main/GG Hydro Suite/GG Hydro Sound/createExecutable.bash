@@ -1,0 +1,1 @@
+pyinstaller --onefile --windowed --copy-metadata nitypes --copy-metadata nidaqmx "GG Hydro Sound.py"
