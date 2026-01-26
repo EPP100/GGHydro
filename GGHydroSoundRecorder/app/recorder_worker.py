@@ -1,7 +1,5 @@
-
 import threading
 from pathlib import Path
-
 from PySide6.QtCore import QObject, Signal
 from nidaqmx.constants import LoggingOperation
 
@@ -16,7 +14,6 @@ class RecorderWorker(QObject):
 
     def __init__(
         self,
-        project_name: str,
         mic_cfg: MicConfig,
         record_meta: RecordMeta,
         stop_event: threading.Event,
@@ -24,7 +21,6 @@ class RecorderWorker(QObject):
         logging_operation: LoggingOperation,
     ):
         super().__init__()
-        self.project_name = project_name
         self.mic_cfg = mic_cfg
         self.record_meta = record_meta
         self.stop_event = stop_event

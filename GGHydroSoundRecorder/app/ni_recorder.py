@@ -21,7 +21,11 @@ def pa_to_db_spl(p_pa: float, pref: float = 20e-6) -> float:
     return 20.0 * math.log10(p_pa / pref)
 
 def estimate_max_spl_db(max_input_volts: float, sensitivity_mV_per_Pa: float) -> float:
-    sens_v_per_pa = float(sensitivity_mV_per_Pa)
+    """
+    max_snd_press_level is in dB SPL re 20 µPa (per NI docs).
+    Pmax(Pa) = Vmax / (sens[V/Pa]), sens[V/Pa] = (mV/Pa)/1000.  SPL = 20*log10(P/20e-6).
+    """
+    sens_v_per_pa = float(sensitivity_mV_per_Pa) / 1000.0
     if sens_v_per_pa <= 0:
         return 140.0
     pmax_pa = float(max_input_volts) / sens_v_per_pa
@@ -58,6 +62,7 @@ def record_microphone_to_tdms(
             current_excit_val=0.004,  # 4 mA IEPE
         )
 
+        # Recommended with IEPE to remove DC offset
         ch.ai_coupling = Coupling.AC
         ch.ai_microphone_sensitivity = float(sensitivity_mV_per_Pa)
 
@@ -67,6 +72,7 @@ def record_microphone_to_tdms(
             samps_per_chan=total_samples,
         )
 
+        # Native TDMS logging (best perf in LOG mode; cannot read while logging)
         task.in_stream.configure_logging(
             str(tdms_path),
             LoggingMode.LOG,

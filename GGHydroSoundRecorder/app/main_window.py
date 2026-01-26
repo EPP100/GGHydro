@@ -1,4 +1,3 @@
-
 import threading
 import time
 from pathlib import Path
@@ -6,8 +5,8 @@ from pathlib import Path
 from PySide6.QtCore import Qt, QThread, QTimer, QSettings
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QGridLayout, QHBoxLayout, QGroupBox,
-    QLabel, QLineEdit, QComboBox, QDoubleSpinBox, QPushButton,
-    QProgressBar, QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox
+    QLabel, QLineEdit, QComboBox, QDoubleSpinBox, QPushButton, QFileDialog,
+    QProgressBar, QMessageBox
 )
 
 from nidaqmx.system import System
@@ -20,22 +19,13 @@ from .utils import sanitize_token, build_tdms_filename, ensure_dir, increment_pa
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, project_dir: Path):
+    def __init__(self):
         super().__init__()
         self.setWindowTitle("Machine Audio Sampler (NI-DAQmx + TDMS)")
-        self.setMinimumWidth(980)
+        self.setMinimumWidth(880)
 
-        # Project folder context
-        self.project_dir = Path(project_dir).resolve()
-        self.project_name = self.project_dir.name  # folder name defines project name
-        self.project_settings_path = self.project_dir / "settings.ini"
-
-        # recordings/<UNIT>/...
-        self.recordings_root = self.project_dir / "recordings"
-        ensure_dir(self.recordings_root)
-
-        # Per-project settings stored in project folder
-        self.settings = QSettings(str(self.project_settings_path), QSettings.IniFormat)
+        # Global app settings (remember last choices)
+        self.settings = QSettings("MachineAudioSampler", "RecorderApp")
 
         self.stop_event = threading.Event()
         self.thread = None
@@ -46,15 +36,6 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(root)
         main = QVBoxLayout(root)
         main.setSpacing(10)
-
-        # Project folder + name
-        lbl_project_folder = QLabel(f"Project Folder: {self.project_dir}")
-        lbl_project_folder.setStyleSheet("color: #aaa;")
-        main.addWidget(lbl_project_folder)
-
-        lbl_project_name = QLabel(f"Project: {self.project_name}")
-        lbl_project_name.setStyleSheet("font-size: 16px; font-weight: 600;")
-        main.addWidget(lbl_project_name)
 
         # -------------------------
         # Microphone (IEPE)
@@ -94,29 +75,41 @@ class MainWindow(QMainWindow):
         gb_rec = QGroupBox("Recording")
         gl_rec = QGridLayout(gb_rec)
 
-        # ✅ Unit number moved here (from microphone section)
-        gl_rec.addWidget(QLabel("Unit Number:"), 0, 0)
-        self.le_unit = QLineEdit(self.settings.value("unit", "U1"))
-        gl_rec.addWidget(self.le_unit, 0, 1)
+        gl_rec.addWidget(QLabel("Project Name:"), 0, 0)
+        self.le_project = QLineEdit(self.settings.value("project", "PIT5"))
+        gl_rec.addWidget(self.le_project, 0, 1)
 
-        gl_rec.addWidget(QLabel("Unit State:"), 1, 0)
+        gl_rec.addWidget(QLabel("Unit Number:"), 1, 0)
+        self.le_unit = QLineEdit(self.settings.value("unit", "U1"))
+        gl_rec.addWidget(self.le_unit, 1, 1)
+
+        gl_rec.addWidget(QLabel("Unit State:"), 2, 0)
         self.le_state = QLineEdit(self.settings.value("last_state", ""))
         self.le_state.setPlaceholderText("e.g. Idle / SNL / Full Load / ...")
-        gl_rec.addWidget(self.le_state, 1, 1)
+        gl_rec.addWidget(self.le_state, 2, 1)
 
-        gl_rec.addWidget(QLabel("Location:"), 2, 0)
+        gl_rec.addWidget(QLabel("Location:"), 3, 0)
         self.le_location = QLineEdit(self.settings.value("last_location", ""))
         self.le_location.setPlaceholderText("e.g. G1 / T1 / ...")
-        gl_rec.addWidget(self.le_location, 2, 1)
+        gl_rec.addWidget(self.le_location, 3, 1)
 
-        gl_rec.addWidget(QLabel("Duration:"), 3, 0)
+        gl_rec.addWidget(QLabel("Duration:"), 4, 0)
         self.sb_duration = QDoubleSpinBox()
         self.sb_duration.setRange(0.1, 600.0)
         self.sb_duration.setDecimals(1)
         self.sb_duration.setSuffix(" s")
         self.sb_duration.setValue(float(self.settings.value("duration", 1.0)))
-        gl_rec.addWidget(self.sb_duration, 3, 1)
+        gl_rec.addWidget(self.sb_duration, 4, 1)
 
+        gl_rec.addWidget(QLabel("Storage Path:"), 5, 0)
+        self.le_path = QLineEdit(self.settings.value("storage_path", ""))
+        self.btn_browse = QPushButton("Browse…")
+        row_path = QHBoxLayout()
+        row_path.addWidget(self.le_path)
+        row_path.addWidget(self.btn_browse)
+        gl_rec.addLayout(row_path, 5, 1)
+
+        # Status row
         status_row = QHBoxLayout()
         self.lbl_dot = QLabel("●")
         self.lbl_dot.setStyleSheet("color: #777;")
@@ -127,12 +120,13 @@ class MainWindow(QMainWindow):
         status_row.addWidget(self.lbl_status)
         status_row.addStretch(1)
         status_row.addWidget(self.lbl_elapsed)
-        gl_rec.addLayout(status_row, 4, 0, 1, 2)
+        gl_rec.addLayout(status_row, 6, 0, 1, 2)
 
+        # Progress + Buttons
         self.pb = QProgressBar()
         self.pb.setRange(0, 1000)
         self.pb.setValue(0)
-        gl_rec.addWidget(self.pb, 5, 0, 1, 2)
+        gl_rec.addWidget(self.pb, 7, 0, 1, 2)
 
         btn_row = QHBoxLayout()
         self.btn_start = QPushButton("Start")
@@ -140,23 +134,12 @@ class MainWindow(QMainWindow):
         self.btn_stop.setEnabled(False)
         btn_row.addWidget(self.btn_start)
         btn_row.addWidget(self.btn_stop)
-        gl_rec.addLayout(btn_row, 6, 0, 1, 2)
+        gl_rec.addLayout(btn_row, 8, 0, 1, 2)
 
         main.addWidget(gb_rec)
 
-        # -------------------------
-        # Table Log
-        # -------------------------
-        self.table = QTableWidget(0, 5)
-        self.table.setHorizontalHeaderLabels(["TDMS File", "Duration (s)", "Unit State", "Location", "Timestamp"])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        for c in range(1, 5):
-            self.table.horizontalHeader().setSectionResizeMode(c, QHeaderView.ResizeToContents)
-        main.addWidget(self.table)
-
-        # -------------------------
         # Signals / Timers
-        # -------------------------
+        self.btn_browse.clicked.connect(self._browse_path)
         self.btn_start.clicked.connect(self.start_recording)
         self.btn_stop.clicked.connect(self.stop_recording)
 
@@ -173,7 +156,6 @@ class MainWindow(QMainWindow):
     def refresh_devices(self):
         self.cb_device.clear()
         self.cb_channel.clear()
-
         try:
             system = System.local()
             devices = list(system.devices)
@@ -213,24 +195,36 @@ class MainWindow(QMainWindow):
             self.cb_channel.addItem(f"(error: {e})")
 
     # -------------------------
-    # Recording actions
+    # Recording
     # -------------------------
+    def _browse_path(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Storage Folder")
+        if folder:
+            self.le_path.setText(folder)
+
     def start_recording(self):
+        project = self.le_project.text().strip()
         unit = self.le_unit.text().strip()
         state = self.le_state.text().strip()
         loc = self.le_location.text().strip()
         duration = float(self.sb_duration.value())
+        storage = self.le_path.text().strip()
 
+        if not project:
+            return self._error("Missing info", "Project Name is required.")
         if not unit:
             return self._error("Missing info", "Unit Number is required.")
         if not state or not loc:
             return self._error("Missing info", "Unit State and Location are required.")
+        if not storage:
+            return self._error("Missing info", "Storage Path is required.")
 
         ch = self.cb_channel.currentText().strip()
         if not ch or ch.startswith("("):
             return self._error("Missing info", "Select a valid NI channel (e.g., cDAQ1Mod1/ai0).")
 
-        # Save per-project settings into <project folder>/settings.ini
+        # Persist (global) settings
+        self.settings.setValue("project", project)
         self.settings.setValue("unit", unit)
         self.settings.setValue("sens", float(self.sb_sens.value()))
         self.settings.setValue("mic_id", self.le_mic_id.text().strip())
@@ -238,21 +232,31 @@ class MainWindow(QMainWindow):
         self.settings.setValue("last_state", state)
         self.settings.setValue("last_location", loc)
         self.settings.setValue("ni_channel", ch)
+        self.settings.setValue("storage_path", storage)
 
-        # Tokens for file naming
-        project_tok = sanitize_token(self.project_name)
+        # Ensure storage path exists
+        base_dir = Path(storage).expanduser().resolve()
+        if not base_dir.exists():
+            if not self._ask_create_folder(base_dir):
+                return
+            try:
+                base_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                return self._error("Cannot create folder", f"{base_dir}\n\n{e}")
+
+        # Build filename in the EXACT storage folder (no subfolders)
+        proj_tok = sanitize_token(project)
         unit_tok = sanitize_token(unit)
         state_tok = sanitize_token(state)
         loc_tok = sanitize_token(loc)
 
-        # Unit creates subfolder for recordings
-        out_dir = self.recordings_root / unit_tok
+        out_dir = base_dir                               # <-- changed: direct storage path
         ensure_dir(out_dir)
 
-        filename = build_tdms_filename(project_tok, unit_tok, state_tok, loc_tok)
+        filename = build_tdms_filename(proj_tok, unit_tok, state_tok, loc_tok)
         tdms_path = out_dir / filename
 
-        # Ask if exists: Increment / Overwrite / Cancel
+        # File exists? Ask Increment / Overwrite / Cancel
         logging_operation = LoggingOperation.CREATE_OR_REPLACE
         if tdms_path.exists():
             choice = self._ask_file_exists(tdms_path.name)
@@ -268,7 +272,9 @@ class MainWindow(QMainWindow):
             sensitivity_mV_per_Pa=float(self.sb_sens.value()),
             microphone_id=self.le_mic_id.text().strip(),
         )
-        meta = RecordMeta(unit=unit, unit_state=state, location=loc, duration_s=duration)
+        meta = RecordMeta(
+            project=project, unit=unit, unit_state=state, location=loc, duration_s=duration
+        )
 
         self.stop_event.clear()
 
@@ -284,7 +290,6 @@ class MainWindow(QMainWindow):
         # Worker thread
         self.thread = QThread()
         self.worker = RecorderWorker(
-            project_name=self.project_name,
             mic_cfg=mic_cfg,
             record_meta=meta,
             stop_event=self.stop_event,
@@ -311,19 +316,30 @@ class MainWindow(QMainWindow):
         self.stop_event.set()
         self._set_status("Stopping...")
 
+    # -------------------------
+    # UI helpers
+    # -------------------------
+    def _ask_create_folder(self, folder: Path) -> bool:
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Question)
+        msg.setWindowTitle("Create folder?")
+        msg.setText(f"The folder does not exist:\n\n{folder}\n\nCreate it now?")
+        yes = msg.addButton("Create", QMessageBox.AcceptRole)
+        no = msg.addButton("Cancel", QMessageBox.RejectRole)
+        msg.setDefaultButton(yes)
+        msg.exec()
+        return msg.clickedButton() == yes
+
     def _ask_file_exists(self, filename: str) -> str:
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Warning)
         msg.setWindowTitle("File already exists")
         msg.setText(f"The file already exists:\n\n{filename}\n\nWhat do you want to do?")
-
         btn_increment = msg.addButton("Increment", QMessageBox.AcceptRole)
         btn_overwrite = msg.addButton("Overwrite", QMessageBox.DestructiveRole)
         btn_cancel = msg.addButton("Cancel", QMessageBox.RejectRole)
-
         msg.setDefaultButton(btn_increment)
         msg.exec()
-
         clicked = msg.clickedButton()
         if clicked == btn_increment:
             return "increment"
@@ -336,28 +352,17 @@ class MainWindow(QMainWindow):
         self.started_at = None
         self.pb.setValue(1000)
         self._set_status("Idle")
-
         self.btn_start.setEnabled(True)
         self.btn_stop.setEnabled(False)
-
-        row = self.table.rowCount()
-        self.table.insertRow(row)
-        self.table.setItem(row, 0, QTableWidgetItem(result.tdms_path))
-        self.table.setItem(row, 1, QTableWidgetItem(f"{result.duration_s:.2f}"))
-        self.table.setItem(row, 2, QTableWidgetItem(result.unit_state))
-        self.table.setItem(row, 3, QTableWidgetItem(result.location))
-        self.table.setItem(row, 4, QTableWidgetItem(result.timestamp_iso))
-        self.table.scrollToBottom()
+        # No table; nothing else to show after recording.
 
     def _on_error(self, msg: str):
         self.ui_timer.stop()
         self.started_at = None
         self.pb.setValue(0)
         self._set_status("Idle")
-
         self.btn_start.setEnabled(True)
         self.btn_stop.setEnabled(False)
-
         self._error("Recording failed", msg)
 
     def _tick(self):

@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 
 @dataclass
@@ -9,6 +8,7 @@ class MicConfig:
 
 @dataclass
 class RecordMeta:
+    project: str
     unit: str
     unit_state: str
     location: str

@@ -1,4 +1,3 @@
-
 import re
 from datetime import datetime
 from pathlib import Path
@@ -6,7 +5,6 @@ from pathlib import Path
 def sanitize_token(text: str, max_len: int = 60) -> str:
     text = (text or "").strip()
     text = re.sub(r"\s+", " ", text)
-    # remove characters that are problematic in Windows paths
     text = re.sub(r'[<>:"/\\|?*\x00-\x1F]', "", text)
     text = text.strip()
     return (text[:max_len] if text else "NA")
@@ -19,7 +17,6 @@ def iso_timestamp_seconds() -> str:
 
 def build_tdms_filename(project: str, unit: str, unit_state: str, location: str) -> str:
     """
-    Template required:
     YYYY-MM-DD - PROJECT - UNIT - UNITSTATE - LOCATION.tdms
     """
     date_str = today_yyyy_mm_dd()
@@ -30,11 +27,10 @@ def ensure_dir(p: Path) -> None:
 
 def increment_path(path: Path) -> Path:
     """
-    Return a new path with ' (2)', ' (3)' ... appended if needed.
+    'file.tdms' -> 'file (2).tdms', 'file (3).tdms', ...
     """
     if not path.exists():
         return path
-
     stem, suffix = path.stem, path.suffix
     n = 2
     while True:
