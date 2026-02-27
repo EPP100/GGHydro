@@ -6,3 +6,5 @@ GGHydroSuite/GGHydroSoundRecorder/build/
 GGHydroSuite/GGGHydroCISGExtractor/build/
 
 GGHydroSuite/GGGHydroCISGExtractor/dist/
+
+GGHydroSuite/GGHydroSoundRecorder/app/__pycache__/

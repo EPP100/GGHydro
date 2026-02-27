@@ -13,7 +13,7 @@ from nidaqmx.constants import (
     Coupling,
 )
 
-SAMPLE_RATE = 25600  # Hz
+SAMPLE_RATE = 51200  # Hz
 
 def pa_to_db_spl(p_pa: float, pref: float = 20e-6) -> float:
     """Convert Pascals to dB SPL re 20 µPa."""
@@ -42,14 +42,14 @@ def record_microphone_to_tdms(
     logging_operation: LoggingOperation = LoggingOperation.CREATE_OR_REPLACE,
 ) -> float:
     """
-    Records finite samples at 25600 Hz and logs directly to TDMS (native DAQmx logging).
+    Records finite samples at 51200 Hz and logs directly to TDMS (native DAQmx logging).
     Returns actual elapsed seconds.
     """
     total_samples = int(round(SAMPLE_RATE * float(duration_s)))
     if total_samples <= 0:
         raise ValueError("Duration too small; total_samples <= 0")
 
-    max_spl_db = estimate_max_spl_db(max_input_volts_for_estimate, sensitivity_mV_per_Pa)
+    max_spl_db = 100 # estimate_max_spl_db(max_input_volts_for_estimate, sensitivity_mV_per_Pa)
 
     with nidaqmx.Task() as task:
         ch = task.ai_channels.add_ai_microphone_chan(
@@ -88,7 +88,7 @@ def record_microphone_to_tdms(
                 try:
                     task.stop()
                 finally:
-                    break
+                    pass
 
             if task.is_task_done():
                 break
